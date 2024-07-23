@@ -1,7 +1,7 @@
-# LEDs
+# Humidistat
 
-Arduino library to control LEDs. Creates an LED object which can be used to turn LEDs on/off and enter blinking states.
+Arduino library to control a DHT module and motor for reducing the humidity in a room..
 
 ## Description
 
-A simple LED library for creating LED objects and controlling them.
+A library for creating humidistat objects to reduce the humidity in a room.
