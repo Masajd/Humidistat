@@ -1,238 +1,472 @@
 /*
-  LED.CPP - Library for creating and controlling LEDs
+  Humidistat.CPP - Library for creating a Humidistat extractor fan
   Created by Sam Dicker on 10.7.2024
 */
 
 #include "Arduino.h"
-#include "LEDs.h"
+#include "Humidistat.h"
+#include "DHT.h"
 
 /**
-** Default Constructor that creates an LED on Pin 1, with a timing of 0 and an old timing of 0,
-** with the LED set to OFF and a time delay between blinks of 1 second. The LED is unnamed.
-**/
-LEDs::LEDs(){
-    Pin = 1;
-    ms = 0;
-    msOld = 0;
-    LEDState = 0;
-    Brightness = 255;
-    tDelay = 1000;
-    Name = "Unnamed LED";
-}
+ * Default Constructor for producing a Humidistat. The DHT module is set to Pin 1 and is assumed to be a DHT11 Type. The motor is set to Pin 2.
+ * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
+ * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
+ * The fan speed is set to 255 (maximum speed) and the Humidistat is unnamed.
+ */
+Humidistat::Humidistat(){
+  DHTPin = 1;
+  DHTType = DHT11;
+  MotorPin = 2;
+  
+  minHumidity = 20;
+  maxHumidity = 80;
 
-/**
-** Constructor that takes 1 argument. It assigns the LED to a pin, and sets a default time delay of 1000ms. The LED is unnamed.
-** @param int Pin, Pin that LED is assigned to on the Arduino.
-**/
-LEDs::LEDs(int Pin){
-    this->Pin = Pin;
-    ms = 0;
-    msOld = 0;
-    LEDState = 0;
-    Brightness = 255;
-    tDelay = 1000;
-    Name = "Unnamed LED";
+  minTemp = 0;
+  maxTemp = 50;
 
-    initLED();
-    LEDOff();
-}
+  fanSpeed = 255;
 
-/**
-** Constructor that takes 2 arguments. It assigns the LED to a pin and gives it a name.
-** @param int Pin, Pin that LED is assigned to on the Arduino.
-** @param String Name, Name of the LED, usually its colour and assigned pin.
-**/
-LEDs::LEDs(int Pin, String Name){
-    this->Pin = Pin;
-    ms = 0;
-    msOld = 0;
-    LEDState = 0;
-    Brightness = 255;
-    tDelay = 1000;
-    this->Name = Name;
+  cooldownTime = 10000;
+  Name = "Unnamed Humidistat";
 
-    initLED();
-    LEDOff();
+  getHumidity();
+  getTemperature();
+
+  initDHT();
+  initMotor();
 }
 
 /**
-** Constructor that takes 3 arguments. It assigns the LED to a pin, the time delay between blinks, and gives it a name.
-** @param int Pin, Pin that LED is assigned to on the Arduino.
-** @param long tDelay, Time delay between blinks of LED states.
-** @param String Name, Name of the LED, usually its colour and assigned pin.
+ * Constructor for producing a Humidistat from 3 arguments. The DHT module is set to to Pin DHTPin and is assumed to be a DHT11 Type.
+ * The Motor is set to Pin MotorPin on the Ardiuno.
+ * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
+ * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
+ * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
+** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
+** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
+** @param String Name, the name of the Humidistat e.g. Basement Humidistat
 **/
-LEDs::LEDs(int Pin, long tDelay, String Name){
-    this->Pin = Pin;
-    ms = 0;
-    msOld = 0;
-    LEDState = 0;
-    Brightness = 255;
-    this->tDelay = tDelay;
-    this->Name = Name;
+Humidistat::Humidistat(DHTPin,MotorPin,Name){
+  this->DHTPin = DHTPin;
+  DHTType = DHT11;
+  this->MotorPin = MotorPin;
+  
+  minHumidity = 20;
+  maxHumidity = 80;
 
-    initLED();
-    LEDOff();
+  minTemp = 0;
+  maxTemp = 50;
+
+  fanSpeed = 255;
+
+  cooldownTime = 10000;
+  this->Name = Name;
+
+  getHumidity();
+  getTemperature();
+
+  initDHT();
+  initMotor();
 }
 
-/** Initialises pin that LED is assigned to OUTPUT.
+/**
+ * Constructor for producing a Humidistat from 4 arguments. The DHT module is set to to Pin DHTPin and is set to be a DHTType Type.
+ * The Motor is set to Pin MotorPin on the Ardiuno.
+ * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
+ * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
+ * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
+** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
+** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
+** @param String DHTType, The type of DHT module connected to the Arduino e.g. DHT11.
+** @param String Name, the name of the Humidistat e.g. Basement Humidistat.
 **/
-void LEDs::initLED(){
-    pinMode(Pin,OUTPUT);
+Humidistat::Humidistat(DHTPin,MotorPin,DHTType,Name){
+  this->DHTPin = DHTPin;
+  this->DHTType = DHTType;
+  this->MotorPin = MotorPin;
+  
+  minHumidity = 20;
+  maxHumidity = 80;
+
+  minTemp = 0;
+  maxTemp = 50;
+
+  fanSpeed = 255;
+
+  cooldownTime = 10000;
+  this->Name = Name;
+
+  getHumidity();
+  getTemperature();
+
+  initDHT();
+  initMotor();
 }
 
-/** Set Pin value of Pin object.
-** @param int Pin, Pin that LED is assigned to on the Arduino.
+/**
+ * Constructor for producing a Humidistat from 6 arguments. The DHT module is set to to Pin DHTPin and is set to be a DHTType Type.
+ * The Motor is set to Pin MotorPin on the Ardiuno.
+ * The minimum humidity is set to minHumidity and the maximum is set to maxHumidity. 
+ * If the minHumidity or the maxHumidity exceed the DHT modules maximum or minimum humidity values then minHumidity and maxHumidity are changed to these maxiumum/minimum values.
+ * The minimum temperature is set to 0c and the maximum is set to 50c as these are the minimum and maximum values of the DHT modules.
+ * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
+** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
+** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
+** @param String DHTType, The type of DHT module connected to the Arduino e.g. DHT11.
+** @param float minHumidity, The minimum humidity reading on the DHT module.
+** @param float maxHumidity, The maximum humidity reading on the DHT module.
+** @param String Name, the name of the Humidistat e.g. Basement Humidistat.
 **/
-void LEDs::setPin(int Pin){
-    this->Pin = Pin;
+Humidistat::Humidistat(DHTPin,MotorPin,DHTType,minHumidity,maxHumidity,Name){
+  this->DHTPin = DHTPin;
+  this->DHTType = DHTType;
+  this->MotorPin = MotorPin;
+  
+  if(minHumidity<20 || minHumidity>maxHumidity){
+    minHumidity = 20;
+  }
+  if(maxHumidity>80||maxHumidity<minHumidity){
+    maxHumidity = 80;
+  }
+  this->minHumidity = minHumidity;
+  this->maxHumidity = maxHumidity;
+
+  minTemp = 0;
+  maxTemp = 50;
+  
+  fanSpeed = 255;
+
+  cooldownTime = 10000;
+  this->Name = Name;
+
+  getHumidity();
+  getTemperature();
+
+  initDHT();
+  initMotor();
 }
 
-/** Set the state of the LED to 0 or 1 to show the LED as being on or off.
-**  @param int LEDState, State of the LED, 0 = OFF, 1 = ON.
-**/
-void LEDs::setLEDState(int LEDState){
-    this->LEDState = LEDState;
+/**
+ * Initialises the DHT module using the DHT Library using the assigned Pin and DHT Type.
+ * It then gets the temperature and humidity reading from the module.
+ */
+void Humidistat::initDHT(){
+  DHT DHTSensor(DHTPin, DHTType);
+  DHTSensor.begin();
+  getTemperature();
+  getHumidity();
 }
 
-/** Set the length between blinks of the LED object
-**  @param long tDelay, Time delay between blinks of LED states.
-**/
-void LEDs::settDelay(long tDelay){
-    this->tDelay = tDelay;
+/**
+ * Initialises the motor controller using the assigned pin.
+ * It then makes sure that the motor is turned off.
+ */
+void Humidistat::initMotor(){
+  pinMode(MotorPin,OUTPUT);
+  MotorOff();
 }
 
-/** Set the Name of the LED object.
-**  @param String Name, Name of the LED, usually its colour and assigned pin.
-**/
-void LEDs::setName(String Name){
-    this->Name = Name;
+// Set Variables
+/**
+ * Sets a new DHT module pin and then restarts the module.
+ * @param int DHTPin, the new pin that the DHTmodule is on.
+ */
+void Humidistat::setDHTPin(DHTPin){
+  this->DHTPin = DHTPin;
+  initDHT();
 }
 
-/** Set the current clock timer to a value
-**  @param int ms, the current clock timer value
-**/
-void LEDs::setms(long ms){
-    this->ms = ms;
+/**
+ * Sets a new motor controller pin and then restarts the motor controller.
+ * @param int MotorPin, the new pin that the motor controller is on.
+ */
+void Humidistat::setMotorPin(MotorPin){
+  this->MotorPin = MotorPin;
+  initMotor();
 }
 
-/** Set a value for the old clock timer
-**  @param long msOld, the old clock timer value
-**/
-void LEDs::setmsOld(long msOld){
-    this->msOld = msOld;
+/**
+ * Sets a new DHTType and then restarts the DHT module.
+ * @param String DHTType, the new DHT Type.
+ */
+void Humidistat::setDHTType(DHTType){
+  this->DHTType = DHTType;
+  initDHT();
 }
 
-/**  Sets the brightness of the LED when it is turned on.
-**   @param int Brightness, the brightness of the LED when turned on.
-**/
-void LEDs::setBrightness(int Brightness){
-    if(Brightness>0 && Brightness<256){
-        this->Brightness = Brightness;
-    }
-    else{
-        Serial.println("Enter a brightness between 0 and 256");
-    }
+/**
+ * Overides the Humidity reading of the DHT module with a new value.
+ * @param float Humidity, the new humidity value between 0% and 100%.
+ */
+void Humidistat::setHumidity(Humidity){
+  if(Humidity<=100 && Humidity>0){
+    this->Humidity = Humidity;
+  }
+  else{
+    Serial.println("Value must be between 0 and 100.");
+  }
 }
 
-/** Get the LEDs Pin Number.
-**  @return int Pin, the LEDs assgined Pin on the Arduino
-**/
-int LEDs::getPin(){
-    return Pin;
+/**
+ * Sets a new minimum humidity.
+ * @param float minHumidity, the new minimum humidity.
+ */
+void Humidistat::setMinHumidity(minHumidity){
+  if(minHumidity>0 && minHumidity<=100 && minHumidity<maxHumidity){
+    this->minHumidity = minHumidity;
+  }
+  else{
+    Serial.println("Value must be between 0 and 100, and less than maxHumidity.");
+  }
 }
 
-/** Gets the LED state of the LED.
-**  @return int LEDState, the LED state of the LED.
-**/
-int LEDs::getLEDState(){
-    return LEDState;
+/**
+ * Sets a new maximum humidity.
+ * @param float maxHumidity, the new maximum humidity.
+ */
+void Humidistat::setMaxHumidity(maxHumidity){
+  if(maxHumidity>0 && maxHumidity<=100 && maxHumidity>minHumidity){
+    this->maxHumidity = maxHumidity;
+  }
+  else{
+    Serial.println("Value must be between 0 and 100, and more than minHumidity.");
+  }
 }
 
-/** Gets the time interval between blinks of the LED.
-**  @return long tDelay, the time interval between blinks value of the LED.
-**/
-long LEDs::gettDelay(){
-    return tDelay;
+/**
+ * Overides the temperature readings from the DHT module.
+ * @param float Temperature, the new temperature greater than 0.
+ */
+void Humidistat::setTemperature(Temperature){
+  if(Temperature>-273){
+    this->Temperature=Temperature;
+  }
+  else{
+    Serial.println("Value must be greater than -273c")
+  }
 }
 
-/** Gets the Name of the LED.
-**  @return String Name, the name of the LED.
-**/
-String LEDs::getName(){
-    return Name;
+/**
+ * Sets a new minimum temperature.
+ * @param float minTemp, the new minimum temperature.
+ */
+void Humidistat::setMinTemp(minTemp){
+  if(minTemp>-273 && minTemp<maxTemp){
+    this->minTemp = minTemp;
+  }
+  else{
+    Serial.println("Value must be greater than -273c and less than maxTemp.")
+  }
 }
 
-/** Gets the current clock timer value
-**  @return long ms, the current clock timer value.
-**/
-long LEDs::getms(){
-    return ms;
+/**
+ * Sets a new maximum temperature.
+ * @param float maxTemp, the new maximum temperature.
+ */
+void Humidistat::setMaxTemp(maxTemp){
+  if(maxTemp>-273 && maxTemp>minTemp){
+    this->maxTemp = maxTemp;
+  }
+  else{
+    Serial.println("Value must be greater than -273 and more than minTemp.")
+  }
+}
+/**
+ * Sets a new fan speed.
+ * @param int fanSpeed, the new motor speed from 0 to 255.
+ */
+void Humidistat::setFanSpeed(fanSpeed){
+  if(fanSpeed>=0 && fanSpeed<=255){
+    this->fanSpeed = fanSpeed;
+  }
+  else{
+    Serial.println("Value must be between 0 and 255.")
+  }
 }
 
-/** Gets the old clock timer value.
-**  @return long msOld, the old clock timer value.
-**/
-long LEDs::getmsOld(){
-    return msOld;
+/**
+ * Sets the motor state of the motor. Where true is on, and false is off.
+ * @param bool MotorState, when true motor is on, when false the motor is off.
+ */
+void Humidistat::setMotorState(MotorState){
+  this->MotorState = MotorState;
 }
 
-/** Get the Brightness of the LED.
-**  @return int Brightness, the Brightness of the LED.
-**/
-int LEDs::getBrightness(){
-    return Brightness;
+/**
+ * Sets a new cooldownTime.
+ * @param long cooldownTime, The length of time before the motor can run again.
+ */
+void Humidistat::setCoolDownTime(cooldownTime){
+  this->cooldownTime = cooldownTime;
 }
 
-/** Turn the LED on and set the LED state to 1.
-**/
-void LEDs::LEDOn(){
-    digitalWrite(Pin,HIGH);
-    setLEDState(1);
+/**
+ * Sets a new name for the Humidistat object.
+ * @param String Nanme, the new name of the humidistat object.
+ */
+void Humidistat::setName(Name){
+  this->Name = Name;
 }
 
-/** Turns the LED on with a given brightness and sets the LED State to 1.
-**  @param int Brightness, the brightness of the LED.
-**/
-void LEDs::LEDOn(int Brightness){
-    setBrightness(Brightness);
-    analogWrite(Pin,Brightness);
-    setLEDState(1);
+// Get Variables
+/**
+ * Returns the DHT module pin.
+ * @return int DHTPin, the read pin of the DHT module.
+ */
+int Humidistat::getDHTPin(){
+  return DHTPin;
 }
 
-/** Turn the LED off and set the LED state to 0.
-**/
-void LEDs::LEDOff(){
-    digitalWrite(Pin,LOW);
-    setLEDState(0);
+/**
+ * Returns the motor controller pin.
+ * @return int MotoroPin, the pin assigned to the motorcontroller.
+ */
+int Humidistat::getMotorPin(){
+  return MotorPin;
 }
 
-/** Blinks the LED with an interval of tDelay.
-**/
-void LEDs::BlinkLED(){
-    setms(millis());
-    if((getms() - getmsOld())>gettDelay()){
-    setmsOld(getms());
-    if(getLEDState() == 0){
-        LEDOff();
-    }
-    else{
-        LEDOn();
-    }
-    }
+/**
+ * Returns the DHT type of the DHT module.
+ * @return String DHTType, the DHT type of the DHT module.
+ */
+String Humidistat::getDHTType(){
+  return DHTType;
 }
 
-/** Blinks the LED with an interval of tDelay.
-**/
-void LEDs::BlinkLED(int Brightness){
-    setBrightness(Brightness);
-    setms(millis());
-    if((getms() - getmsOld())>gettDelay()){
-    setmsOld(getms());
-    if(getLEDState() == 0){
-        LEDOff();
-    }
-    else{
-        LEDOn(Brightness);
-    }
-    }
+/**
+ * Gets the current humidity from the DHT Sensor, then sets the new humidity.
+ * @return float Humidity, the current humidity reading from the DHT sensor.
+ */
+float Humidistat::getHumidity(){
+  Humidity = DHTSensor.readHumidity();
+  setHumidity(Humidity);
+
+  return Humidity;
+}
+
+/**
+ * Returns the minimum humidity.
+ * @return float minHumidity, the minimum humidity set in the humidistat object.
+ */
+float Humidistat::getMinHumidity(){
+  return minHumidity;
+}
+
+/**
+ * Returns the maximum humidity.
+ * @return float maxHumidity, the maximum humidity set in the humidistat object.
+ */
+float Humidistat::getMaxHumidity(){
+  return maxHumidity;
+}
+
+/**
+ * Gets the current temperature reading from the DHT sensor, then sets a new temperature.
+ * @return float Temperature, the current temperature reading from the DHT sensor.
+ */
+float Humidistat::getTemperature(){
+  Temperature = DHTSensor.readTemperature();
+  setTemperature(Temperature);
+
+  return Temperature;
+}
+
+/** 
+ * Returns the minimum temperature.
+ * @return float minTemp, the minimum temperature set in the humidistat object.
+ */
+float Humidistat::getMinTemp(){
+  return minTemp;
+}
+
+/**
+ * Returns the maximum temperature.
+ * @return float maxTemp, the maximum temperature set in the humidistat object.
+ */
+float Humidistat::getMaxTemp(){
+  return maxTemp;
+}
+
+/**
+ * Returns the current fan speed.
+ * @return int fanSpeed, the speed of the motor if in an on state.
+ */
+int Humidistat::getFanSpeed(){
+  return fanSpeed;
+}
+
+/**
+ * Returns the motor state.
+ * @return bool MotorState, The state of the motor where True is On and False is Off.
+ */
+bool Humidistat::getMotorState(){
+  return MotorState;
+}
+
+/**
+ * Returns the cooldown time.
+ * @return long cooldownTime, the cooldown time before the motor can run again.
+ */
+long Humidistat::getCooldownTime(){
+  return cooldownTime;
+}
+
+/**
+ * Returns the name of the Humidistat.
+ * @return String Name, the name of the Humidistat object.
+ */
+String Humidistat::getName(){
+  return Name;
+}
+
+// Class functions
+/**
+ * Turns the motor using the motor pin and the assigned fan speed.
+ * Sets the motor state to 1 (on).
+ */
+void Humidistat::MotorOn(){
+  analogWrite(MotorPin,fanSpeed);
+  setMotorState(1);
+}
+
+/**
+ * Turns the motor off using the motor pin.
+ * Sets the motor state to 0 (off).
+ */
+void Humidistat::MotorOff(){
+  analogWrite(MotorPin,0);
+  setMotorState(0);
+}
+
+/**
+ * Checks the current humidity against the minimum humidity.
+ * If the current humidity is greater than the minimum humidity, then the fan is switched on at fall speed.
+ * Otherwise the motor is turned off.
+ */
+void Humidistat::RoomCheckBinary(){
+  if(getHumidity()>minHumidity){
+    setFanSpeed(255);
+    MotorOn();
+  }
+  else{
+    MotorOff();
+  }
+}
+
+/**
+ * Checks the current humidity against the minimum humidity.
+ * If the current humidity is greater than the minimum humidity, then the fan is turned on at a speed related to the current humidity.
+ * The speed is 40% at the minimum humidity, and 100% at the maximum humidity.
+ * Otherwise the motor is turned off.
+ */
+void Humidistat::RoomCheckSpectrum(){
+  float tempH = getHumidity();
+  if(tempH>minHumidity){
+    float tempFanSpeed = ((255.-100.)/(maxHumidity-minHumidity))*(tempH-maxHumidity)+255.
+    setFanSpeed((int)tempFanSpeed);
+    MotorOn();
+  }
+  else{
+    MotorOff();
+  }
 }

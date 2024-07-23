@@ -1,54 +1,75 @@
 /*
-  LED.h - Library for creating and controlling LEDs
-  Created by Sam Dicker on 10.7.2024
+  Humidistat.h - Library for linking a humidity sensor and DC motor together for humidity control in a room
+  Created by Sam Dicker on 19.7.2024
 */
 
-#ifndef LEDs_h
-#define LEDs_h
+#ifndef Humidistat_h
+#define Humidistat_h
 
 #include "Arduino.h"
+#include "DHT.h"
 
-class LEDs{
+class Humidistat{
     private:
-      int Pin;
-      int Brightness;
-      long ms;
-      long msOld;
-      int LEDState;
-      long tDelay;
+      int DHTPin;
+      int MotorPin;
+      String DHTType;
+      float Humidity;
+      float minHumidity;
+      float maxHumidity;
+      float Temperature;
+      float minTemp;
+      float maxTemp;
+      int fanSpeed;
+      bool MotorState;
+      long cooldownTime;
       String Name;
 
-      void initLED();
-
-      void setms(long);
-      void setmsOld(long);
-
-      long getms();
-      long getmsOld();
-
+      void initDHT();
+      void initMotor();
+      
     public:
-      LEDs();
-      LEDs(int);
-      LEDs(int,String);
-      LEDs(int,long,String);
+    // Constructors
+      Humidistat();
+      Humidistat(int,int,String);
+      Humidistat(int,int,String,String);
+      Humidistat(int,int,String,float,float,String);
 
-      void setPin(int);
-      void setLEDState(int);
-      void settDelay(long);
+      // Set Variables
+      void setDHTPin(int);
+      void setMotorPin(int);
+      void setDHTType(String);
+      void setHumidity(float);
+      void setMinHumidity(float);
+      void setMaxHumidity(float);
+      void setTemperature(float);
+      void setMinTemp(float);
+      void setMaxTemp(float);
+      void setFanSpeed(int);
+      void setMotorState(bool);
+      void setCoolDownTime(long);
       void setName(String);
-      void setBrightness(int);
 
-      int getPin();
-      int getLEDState();
-      long gettDelay();
+      // Get Variables
+      int getDHTPin();
+      int getMotorPin();
+      String getDHTType();
+      float getHumidity();
+      float getMinHumidity();
+      float getMaxHumidity();
+      float getTemperature();
+      float getMinTemp();
+      float getMaxTemp();
+      int getFanSpeed();
+      bool getMotorState();
+      long getCooldownTime();
       String getName();
-      int getBrightness();
 
-      void LEDOn();
-      void LEDOn(int);
-      void LEDOff();
-      void BlinkLED();
-      void BlinkLED(int);
+      // Class functions
+      void MotorOn();
+      void MotorOff();
+      void RoomCheckBinary();
+      void RoomCheckSpectrum();
 };
 
 #endif
