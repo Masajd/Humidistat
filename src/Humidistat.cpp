@@ -15,7 +15,7 @@
  */
 Humidistat::Humidistat(){
   DHTPin = 1;
-  DHTType = DHT11;
+  DHTType = "DHT11";
   MotorPin = 2;
   
   minHumidity = 20;
@@ -48,7 +48,7 @@ Humidistat::Humidistat(){
 **/
 Humidistat::Humidistat(DHTPin,MotorPin,Name){
   this->DHTPin = DHTPin;
-  DHTType = DHT11;
+  DHTType = "DHT11";
   this->MotorPin = MotorPin;
   
   minHumidity = 20;
