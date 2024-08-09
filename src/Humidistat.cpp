@@ -1,6 +1,6 @@
 /*
   Humidistat.CPP - Library for creating a Humidistat extractor fan
-  Created by Sam Dicker on 10.7.2024
+  Created by Sam D on 10.7.2024
 */
 
 #include "Arduino.h"
@@ -8,119 +8,24 @@
 #include "DHT.h"
 
 /**
- * Default Constructor for producing a Humidistat. The DHT module is set to Pin 1 and is assumed to be a DHT11 Type. The motor is set to Pin 2.
- * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
- * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
- * The fan speed is set to 255 (maximum speed) and the Humidistat is unnamed.
- */
-Humidistat::Humidistat(){
-  DHTPin = 1;
-  DHTType = "DHT11";
-  MotorPin = 2;
-  
-  minHumidity = 20;
-  maxHumidity = 80;
-
-  minTemp = 0;
-  maxTemp = 50;
-
-  fanSpeed = 255;
-
-  cooldownTime = 10000;
-  Name = "Unnamed Humidistat";
-
-  getHumidity();
-  getTemperature();
-
-  initDHT();
-  initMotor();
-}
-
-/**
- * Constructor for producing a Humidistat from 3 arguments. The DHT module is set to to Pin DHTPin and is assumed to be a DHT11 Type.
- * The Motor is set to Pin MotorPin on the Ardiuno.
- * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
- * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
- * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
-** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
-** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
-** @param String Name, the name of the Humidistat e.g. Basement Humidistat
-**/
-Humidistat::Humidistat(DHTPin,MotorPin,Name){
-  this->DHTPin = DHTPin;
-  DHTType = "DHT11";
-  this->MotorPin = MotorPin;
-  
-  minHumidity = 20;
-  maxHumidity = 80;
-
-  minTemp = 0;
-  maxTemp = 50;
-
-  fanSpeed = 255;
-
-  cooldownTime = 10000;
-  this->Name = Name;
-
-  getHumidity();
-  getTemperature();
-
-  initDHT();
-  initMotor();
-}
-
-/**
- * Constructor for producing a Humidistat from 4 arguments. The DHT module is set to to Pin DHTPin and is set to be a DHTType Type.
- * The Motor is set to Pin MotorPin on the Ardiuno.
- * The minimum humidity is set to 20% and the maximum is set to 80% as these are the minimum and maximum values of the DHT modules.
- * The minimum temperature is set to 0c and the maximum is set to 50c for the same reason as above.
- * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
-** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
-** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
-** @param String DHTType, The type of DHT module connected to the Arduino e.g. DHT11.
-** @param String Name, the name of the Humidistat e.g. Basement Humidistat.
-**/
-Humidistat::Humidistat(DHTPin,MotorPin,DHTType,Name){
-  this->DHTPin = DHTPin;
-  this->DHTType = DHTType;
-  this->MotorPin = MotorPin;
-  
-  minHumidity = 20;
-  maxHumidity = 80;
-
-  minTemp = 0;
-  maxTemp = 50;
-
-  fanSpeed = 255;
-
-  cooldownTime = 10000;
-  this->Name = Name;
-
-  getHumidity();
-  getTemperature();
-
-  initDHT();
-  initMotor();
-}
-
-/**
- * Constructor for producing a Humidistat from 6 arguments. The DHT module is set to to Pin DHTPin and is set to be a DHTType Type.
+ * @brief Constructor for producing a Humidistat from 6 arguments. The DHT module is set to to Pin DHTPin and is set to be a DHTType Type.
  * The Motor is set to Pin MotorPin on the Ardiuno.
  * The minimum humidity is set to minHumidity and the maximum is set to maxHumidity. 
  * If the minHumidity or the maxHumidity exceed the DHT modules maximum or minimum humidity values then minHumidity and maxHumidity are changed to these maxiumum/minimum values.
  * The minimum temperature is set to 0c and the maximum is set to 50c as these are the minimum and maximum values of the DHT modules.
  * The fan speed is set to 255 (maximum speed) and the Humidistat is named Name.
-** @param int DHTPin, Pin that DHT Module is assigned to on the Arduino.
-** @param int MotorPin, Pin that the motor is assigned to on the Arduino. 
-** @param String DHTType, The type of DHT module connected to the Arduino e.g. DHT11.
-** @param float minHumidity, The minimum humidity reading on the DHT module.
-** @param float maxHumidity, The maximum humidity reading on the DHT module.
-** @param String Name, the name of the Humidistat e.g. Basement Humidistat.
+** @param DHTPin Pin that DHT Module is assigned to on the Arduino.
+** @param MotorPin Pin that the motor is assigned to on the Arduino. 
+** @param DHTType The type of DHT module connected to the Arduino e.g. DHT11.
+** @param minHumidity The minimum humidity reading on the DHT module.
+** @param maxHumidity The maximum humidity reading on the DHT module.
+** @param Name The name of the Humidistat e.g. Basement Humidistat.
 **/
-Humidistat::Humidistat(DHTPin,MotorPin,DHTType,minHumidity,maxHumidity,Name){
+Humidistat::Humidistat(uint8_t DHTPin, int MotorPin, uint8_t DHTType, float minHumidity, float maxHumidity, String Name): DHTSensor(DHTPin, DHTType){
   this->DHTPin = DHTPin;
   this->DHTType = DHTType;
   this->MotorPin = MotorPin;
+  DHTSensor(DHTPin, DHTType);
   
   if(minHumidity<20 || minHumidity>maxHumidity){
     minHumidity = 20;
@@ -139,9 +44,6 @@ Humidistat::Humidistat(DHTPin,MotorPin,DHTType,minHumidity,maxHumidity,Name){
   cooldownTime = 10000;
   this->Name = Name;
 
-  getHumidity();
-  getTemperature();
-
   initDHT();
   initMotor();
 }
@@ -151,7 +53,6 @@ Humidistat::Humidistat(DHTPin,MotorPin,DHTType,minHumidity,maxHumidity,Name){
  * It then gets the temperature and humidity reading from the module.
  */
 void Humidistat::initDHT(){
-  DHT DHTSensor(DHTPin, DHTType);
   DHTSensor.begin();
   getTemperature();
   getHumidity();
@@ -169,9 +70,9 @@ void Humidistat::initMotor(){
 // Set Variables
 /**
  * Sets a new DHT module pin and then restarts the module.
- * @param int DHTPin, the new pin that the DHTmodule is on.
+ * @param uint8_t DHTPin, the new pin that the DHTmodule is on.
  */
-void Humidistat::setDHTPin(DHTPin){
+void Humidistat::setDHTPin(uint8_t DHTPin){
   this->DHTPin = DHTPin;
   initDHT();
 }
@@ -180,16 +81,16 @@ void Humidistat::setDHTPin(DHTPin){
  * Sets a new motor controller pin and then restarts the motor controller.
  * @param int MotorPin, the new pin that the motor controller is on.
  */
-void Humidistat::setMotorPin(MotorPin){
+void Humidistat::setMotorPin(int MotorPin){
   this->MotorPin = MotorPin;
   initMotor();
 }
 
 /**
  * Sets a new DHTType and then restarts the DHT module.
- * @param String DHTType, the new DHT Type.
+ * @param uint8_t DHTType, the new DHT Type.
  */
-void Humidistat::setDHTType(DHTType){
+void Humidistat::setDHTType(uint8_t DHTType){
   this->DHTType = DHTType;
   initDHT();
 }
@@ -198,7 +99,7 @@ void Humidistat::setDHTType(DHTType){
  * Overides the Humidity reading of the DHT module with a new value.
  * @param float Humidity, the new humidity value between 0% and 100%.
  */
-void Humidistat::setHumidity(Humidity){
+void Humidistat::setHumidity(float Humidity){
   if(Humidity<=100 && Humidity>0){
     this->Humidity = Humidity;
   }
@@ -211,7 +112,7 @@ void Humidistat::setHumidity(Humidity){
  * Sets a new minimum humidity.
  * @param float minHumidity, the new minimum humidity.
  */
-void Humidistat::setMinHumidity(minHumidity){
+void Humidistat::setMinHumidity(float minHumidity){
   if(minHumidity>0 && minHumidity<=100 && minHumidity<maxHumidity){
     this->minHumidity = minHumidity;
   }
@@ -224,7 +125,7 @@ void Humidistat::setMinHumidity(minHumidity){
  * Sets a new maximum humidity.
  * @param float maxHumidity, the new maximum humidity.
  */
-void Humidistat::setMaxHumidity(maxHumidity){
+void Humidistat::setMaxHumidity(float maxHumidity){
   if(maxHumidity>0 && maxHumidity<=100 && maxHumidity>minHumidity){
     this->maxHumidity = maxHumidity;
   }
@@ -237,12 +138,12 @@ void Humidistat::setMaxHumidity(maxHumidity){
  * Overides the temperature readings from the DHT module.
  * @param float Temperature, the new temperature greater than 0.
  */
-void Humidistat::setTemperature(Temperature){
+void Humidistat::setTemperature(float Temperature){
   if(Temperature>-273){
     this->Temperature=Temperature;
   }
   else{
-    Serial.println("Value must be greater than -273c")
+    Serial.println("Value must be greater than -273c");
   }
 }
 
@@ -250,12 +151,12 @@ void Humidistat::setTemperature(Temperature){
  * Sets a new minimum temperature.
  * @param float minTemp, the new minimum temperature.
  */
-void Humidistat::setMinTemp(minTemp){
+void Humidistat::setMinTemp(float minTemp){
   if(minTemp>-273 && minTemp<maxTemp){
     this->minTemp = minTemp;
   }
   else{
-    Serial.println("Value must be greater than -273c and less than maxTemp.")
+    Serial.println("Value must be greater than -273c and less than maxTemp.");
   }
 }
 
@@ -263,24 +164,24 @@ void Humidistat::setMinTemp(minTemp){
  * Sets a new maximum temperature.
  * @param float maxTemp, the new maximum temperature.
  */
-void Humidistat::setMaxTemp(maxTemp){
+void Humidistat::setMaxTemp(float maxTemp){
   if(maxTemp>-273 && maxTemp>minTemp){
     this->maxTemp = maxTemp;
   }
   else{
-    Serial.println("Value must be greater than -273 and more than minTemp.")
+    Serial.println("Value must be greater than -273 and more than minTemp.");
   }
 }
 /**
  * Sets a new fan speed.
  * @param int fanSpeed, the new motor speed from 0 to 255.
  */
-void Humidistat::setFanSpeed(fanSpeed){
+void Humidistat::setFanSpeed(int fanSpeed){
   if(fanSpeed>=0 && fanSpeed<=255){
     this->fanSpeed = fanSpeed;
   }
   else{
-    Serial.println("Value must be between 0 and 255.")
+    Serial.println("Value must be between 0 and 255.");
   }
 }
 
@@ -288,7 +189,7 @@ void Humidistat::setFanSpeed(fanSpeed){
  * Sets the motor state of the motor. Where true is on, and false is off.
  * @param bool MotorState, when true motor is on, when false the motor is off.
  */
-void Humidistat::setMotorState(MotorState){
+void Humidistat::setMotorState(bool MotorState){
   this->MotorState = MotorState;
 }
 
@@ -296,7 +197,7 @@ void Humidistat::setMotorState(MotorState){
  * Sets a new cooldownTime.
  * @param long cooldownTime, The length of time before the motor can run again.
  */
-void Humidistat::setCoolDownTime(cooldownTime){
+void Humidistat::setCoolDownTime(long cooldownTime){
   this->cooldownTime = cooldownTime;
 }
 
@@ -304,16 +205,16 @@ void Humidistat::setCoolDownTime(cooldownTime){
  * Sets a new name for the Humidistat object.
  * @param String Nanme, the new name of the humidistat object.
  */
-void Humidistat::setName(Name){
+void Humidistat::setName(String Name){
   this->Name = Name;
 }
 
 // Get Variables
 /**
  * Returns the DHT module pin.
- * @return int DHTPin, the read pin of the DHT module.
+ * @return uint8_t DHTPin, the read pin of the DHT module.
  */
-int Humidistat::getDHTPin(){
+uint8_t Humidistat::getDHTPin(){
   return DHTPin;
 }
 
@@ -327,9 +228,9 @@ int Humidistat::getMotorPin(){
 
 /**
  * Returns the DHT type of the DHT module.
- * @return String DHTType, the DHT type of the DHT module.
+ * @return uint8_t DHTType, the DHT type of the DHT module.
  */
-String Humidistat::getDHTType(){
+uint8_t Humidistat::getDHTType(){
   return DHTType;
 }
 
@@ -462,7 +363,7 @@ void Humidistat::RoomCheckBinary(){
 void Humidistat::RoomCheckSpectrum(){
   float tempH = getHumidity();
   if(tempH>minHumidity){
-    float tempFanSpeed = ((255.-100.)/(maxHumidity-minHumidity))*(tempH-maxHumidity)+255.
+    float tempFanSpeed = ((255.-100.)/(maxHumidity-minHumidity))*(tempH-maxHumidity)+255.;
     setFanSpeed((int)tempFanSpeed);
     MotorOn();
   }

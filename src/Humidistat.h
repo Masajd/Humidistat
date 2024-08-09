@@ -1,6 +1,6 @@
 /*
   Humidistat.h - Library for linking a humidity sensor and DC motor together for humidity control in a room
-  Created by Sam Dicker on 19.7.2024
+  Created by Sam D on 19.7.2024
 */
 
 #ifndef Humidistat_h
@@ -11,9 +11,9 @@
 
 class Humidistat{
     private:
-      int DHTPin;
+      uint8_t DHTPin;
       int MotorPin;
-      String DHTType;
+      uint8_t DHTType;
       float Humidity;
       float minHumidity;
       float maxHumidity;
@@ -24,21 +24,19 @@ class Humidistat{
       bool MotorState;
       long cooldownTime;
       String Name;
+      DHT DHTSensor;
 
       void initDHT();
       void initMotor();
-      
+
     public:
     // Constructors
-      Humidistat();
-      Humidistat(int,int,String);
-      Humidistat(int,int,String,String);
-      Humidistat(int,int,String,float,float,String);
+      Humidistat(uint8_t DHTPin = 1,int MotorPin = 2,uint8_t DHTType = DHT11,float minHumidity = 20,float maxHumidity = 80,String Name = "Unnamed");
 
       // Set Variables
-      void setDHTPin(int);
+      void setDHTPin(uint8_t);
       void setMotorPin(int);
-      void setDHTType(String);
+      void setDHTType(uint8_t);
       void setHumidity(float);
       void setMinHumidity(float);
       void setMaxHumidity(float);
@@ -51,9 +49,9 @@ class Humidistat{
       void setName(String);
 
       // Get Variables
-      int getDHTPin();
+      uint8_t getDHTPin();
       int getMotorPin();
-      String getDHTType();
+      uint8_t getDHTType();
       float getHumidity();
       float getMinHumidity();
       float getMaxHumidity();
